@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1791935115806,
+      "tag": "0000_colorful_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791935547571,
+      "tag": "0001_loose_ironclad",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791937550712,
+      "tag": "0002_early_sprite",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791939039538,
+      "tag": "0003_fixed_anthem",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791940830324,
+      "tag": "0004_perpetual_bloodstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791942211669,
+      "tag": "0005_useful_shocker",
+      "breakpoints": true
+    }
+  ]
+}

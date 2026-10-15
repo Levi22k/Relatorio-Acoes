@@ -11,6 +11,9 @@ async function remote(path:string,options:RequestInit={}){
  const body=await r.json();if(!r.ok)throw new Error(body.message||body.error_description||body.error||'Não foi possível acessar o banco.');return body;
 }
 async function rpc(op:string,payload:unknown={}){return remote('/rest/v1/rpc/caderno_api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op,payload})});}
+export async function treasuryVisibility(op:'list'|'hide'|'restore',key?:string):Promise<string[]|{ok:boolean}>{
+ return remote('/rest/v1/rpc/caderno_treasury_visibility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op,payload:key?{key}:{}})});
+}
 const imageUrl=(path:string)=>url+'/storage/v1/object/public/action-prints/'+path;
 async function removeImage(path:string){if(!path)return;await remote('/storage/v1/object/action-prints',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({prefixes:[path]})});}
 export async function apiFetch(input:string,options:RequestInit={}):Promise<Response>{

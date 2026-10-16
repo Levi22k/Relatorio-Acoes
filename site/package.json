@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node test-database.mjs"
+    "test": "node test-ocr.mjs && node test-database.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.31.0",

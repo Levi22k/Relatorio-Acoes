@@ -1,5 +1,6 @@
-import {matchMembers,type Member} from './member-match';
+import {matchMembers,confirmMember,type Member} from './member-match';
 import {readTeamTotal} from './quality';
+import {detectResult,uniquePlayers} from './ocr-policy';
 import {strikeRows,prepareName,matchKnownName,locateReport,locateWinnerStamp,locatedRows,countTallies,type OcrWord} from './ocr-image';
 export type Player={name:string;kills:number;dead?:boolean|null;killsUncertain?:boolean;nameConfidence?:number;nameAlternatives?:string[];matchedName?:boolean};
 export function parseRows(text:string):Player[]{
@@ -58,12 +59,21 @@ export async function readPrint(file:File,onProgress:(s:string)=>void,signal?:Ab
   const bp=bc.getImageData(0,0,banner.width,banner.height);for(let i=0;i<bp.data.length;i+=4){const r=bp.data[i],g=bp.data[i+1],b=bp.data[i+2];const v=(r>85&&g>145&&b>100)||(r>140&&r>g*1.15&&r>b*1.15)?0:255;bp.data[i]=bp.data[i+1]=bp.data[i+2]=v;}bc.putImageData(bp,0,0);
   await worker.setParameters({tessedit_pageseg_mode:'6'});
   const bannerText=await worker.recognize(banner);
-  const norm=(detectedHeader+' '+full.data.text+' '+bannerText.data.text).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,'');
-  let result:''|'victory'|'defeat'='';
-  if(/assaltantes/.test(norm)&&/venc/.test(norm))result='victory';
-  else if(/oficiais/.test(norm)&&/venc/.test(norm))result='defeat';
+  const resultReadings=[detectedHeader,full.data.text,bannerText.data.text];
+  let result=detectResult(resultReadings);
+  // Retry the isolated banner at different angles and thresholds. This area is
+  // located relative to the report, not to a fixed position in the screenshot.
+  if(!result)for(const angle of [0,4,-4,7]){
+   const retry=document.createElement('canvas');retry.width=stampSource.width*2+80;retry.height=stampSource.height*2+80;
+   const rc=retry.getContext('2d')!;rc.fillStyle='white';rc.fillRect(0,0,retry.width,retry.height);rc.translate(retry.width/2,retry.height/2);rc.rotate(angle*Math.PI/180);rc.drawImage(stampSource,-stampSource.width,-stampSource.height,stampSource.width*2,stampSource.height*2);
+   const px=rc.getImageData(0,0,retry.width,retry.height);
+   for(let i=0;i<px.data.length;i+=4){const r=px.data[i],g=px.data[i+1],b=px.data[i+2];const v=(r>110&&r>g*1.1&&r>b*1.1)||(g>125&&g>r*1.1&&g>b*1.04)?0:255;px.data[i]=px.data[i+1]=px.data[i+2]=v;}
+   rc.putImageData(px,0,0);
+   for(const segmentation of ['6','11']){await worker.setParameters({tessedit_pageseg_mode:segmentation});resultReadings.push((await worker.recognize(retry)).data.text);}
+   result=detectResult(resultReadings);if(result)break;
+  }
   // Supply the roster to the recognizer itself, as well as comparing its output.
-  const vocabulary=[...new Set([...knownNames,...members.flatMap(m=>[m.name,...m.aliases])].flatMap(n=>n.split(/\s+/)).filter(n=>/^[\p{L}\p{N}'-]+$/u.test(n)))];
+  const vocabulary=[...new Set(members.filter(m=>!m.archived).flatMap(m=>[m.name,...m.aliases]).flatMap(n=>n.split(/\s+/)).filter(n=>/^[\p{L}\p{N}'-]+$/u.test(n)))];
   await worker.writeText('/members.txt',vocabulary.join('\n'));
   await worker.reinitialize('por+eng',1,{user_words_file:'/members.txt'});
   const players:Player[]=[];
@@ -76,9 +86,9 @@ export async function readPrint(file:File,onProgress:(s:string)=>void,signal?:Ab
    const row=document.createElement('canvas');row.width=Math.round(layout.span*.68/scale);row.height=rowBottom-rowTop;
    const rc=row.getContext('2d')!;rc.drawImage(original,Math.round((layout.left+layout.span*.075)/scale),rowTop,row.width,row.height,0,0,row.width,row.height);
    const rawName=rc.getImageData(0,0,row.width,row.height),dead=result==='defeat'||strikeRows(rawName).length>0;
-   const readings:{name:string;confidence:number}[]=[];
+   const readings:{name:string;confidence:number;source:string}[]=[];
    const contextualName=documentWords.filter(w=>w.bbox.x0>=layout!.left+layout!.span*.06&&w.bbox.x1<layout!.left+layout!.span*.74&&(w.bbox.y0+w.bbox.y1)/2>=rowTop*scale&&(w.bbox.y0+w.bbox.y1)/2<rowBottom*scale).sort((a,b)=>a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ');
-   if(contextualName)readings.push({name:contextualName,confidence:40});
+   if(contextualName)readings.push({name:contextualName,confidence:40,source:'document'});
    for(const mode of ['contrast','adaptive','green','original','soft'] as const){
     const pixels=prepareName(rawName,mode),small=document.createElement('canvas');small.width=row.width;small.height=row.height;
     small.getContext('2d')!.putImageData(new ImageData(pixels.data as Uint8ClampedArray<ArrayBuffer>,pixels.width,pixels.height),0,0);
@@ -89,14 +99,14 @@ export async function readPrint(file:File,onProgress:(s:string)=>void,signal?:Ab
     await worker.setParameters({tessedit_pageseg_mode:segmentation});
     const r=await worker.recognize(enlarged);let name=r.data.text.replace(/[\r\n]+/g,' ').replace(/[|¦].*$/u,'').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,'').replace(/\s+/g,' ').trim();
     if(dead)name=name.replace(/(?<=[\p{L}])-(?=[\p{L}])/gu,' ');
-    if(name)readings.push({name,confidence:r.data.confidence-(/[^\p{L}\p{N} .'-]/u.test(name)?25:0)});
+    if(name)readings.push({name,source:mode,confidence:r.data.confidence-(/[^\p{L}\p{N} .'-]/u.test(name)?25:0)});
     }
    }
    }
    readings.sort((a,b)=>b.confidence-a.confidence);
-   const alternatives=[...new Set(readings.map(r=>r.name))];const membership=matchMembers(alternatives,members);const known=membership.match?.name||(membership.suggestions.length?undefined:matchKnownName(alternatives,knownNames));
+   const alternatives=[...new Set(readings.map(r=>r.name))];const membership=matchMembers(alternatives,members);const known=confirmMember(readings,members)?.name;
    if(readings.some(r=>/ssaltante|oficia|abates/i.test(r.name)))continue;
-   const name=known||readings[0]?.name||'';const nameConfidence=readings[0]?.confidence||0;
+   const name=known||'';const nameConfidence=readings[0]?.confidence||0;
    const digit=document.createElement('canvas');digit.width=Math.round(layout.span*.065);digit.height=Math.round(row.height*scale);
    digit.getContext('2d')!.drawImage(canvas,layout.left+layout.span*.89,rowTop*scale,digit.width,digit.height,0,0,digit.width,digit.height);
    const dc=digit.getContext('2d')!;const dp=dc.getImageData(0,0,digit.width,digit.height);for(let i=0;i<dp.data.length;i+=4){const v=dp.data[i]>100&&dp.data[i+1]>120&&dp.data[i+2]>120?0:255;dp.data[i]=dp.data[i+1]=dp.data[i+2]=v;}dc.putImageData(dp,0,0);
@@ -112,10 +122,10 @@ export async function readPrint(file:File,onProgress:(s:string)=>void,signal?:Ab
    // Yellow tally marks offer independent evidence when the printed number is faint.
    const uncertain=!/^\d{1,3}$/.test(digits)||(tallies>0&&Number(digits)!==tallies);
    if(tallies>0&&tallies<=5)digits=String(tallies);
-   players.push({name,kills:/^\d{1,3}$/.test(digits)?Number(digits):0,killsUncertain:uncertain,dead,nameConfidence,nameAlternatives:[...new Set([...membership.suggestions,...alternatives])].filter(n=>n!==name),matchedName:!!known});
+   players.push({name,kills:/^\d{1,3}$/.test(digits)?Number(digits):0,killsUncertain:uncertain,dead,nameConfidence,nameAlternatives:[...new Set([...membership.suggestions])].filter(n=>n!==name),matchedName:!!known});
   }
   image.close();
-  return {result,expectedTotal,players:players.map(p=>({...p,dead:result==='defeat'?true:p.dead})),text:full.data.text+'\n'+documentText};
+  return {result,expectedTotal,players:uniquePlayers(players).map(p=>({...p,dead:result==='defeat'?true:p.dead})),text:resultReadings.join('\n')+'\n'+documentText};
  }finally{signal?.removeEventListener('abort',abort);await worker.terminate();}
 }
 

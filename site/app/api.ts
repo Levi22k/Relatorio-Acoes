@@ -32,12 +32,8 @@ export async function apiFetch(input:string,options:RequestInit={}):Promise<Resp
    const form=options.body as FormData,body=JSON.parse(String(form.get('data'))),file=form.get('image');let uploaded='',thumb='';
    if(file instanceof File&&file.size){
     if(file.size>10*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Use PNG, JPG ou WebP de até 10 MB.');
-    body.image_hash=await imageHash(file);
-    const existing=await rpc('actions.list');
-    if(existing.some((a:any)=>a.id!==body.id&&a.image_hash===body.image_hash))throw new Error('Esta print já foi registrada. Abra a ação existente para editar.');
     uploaded=crypto.randomUUID()+({ 'image/png':'.png','image/jpeg':'.jpg','image/webp':'.webp'}[file.type]||'');
     await remote('/storage/v1/object/action-prints/'+uploaded,{method:'POST',headers:{'Content-Type':file.type,'x-upsert':'false'},body:file});
-    try{const small=await thumbnail(file);thumb=crypto.randomUUID()+'.webp';await remote('/storage/v1/object/action-prints/'+thumb,{method:'POST',headers:{'Content-Type':'image/webp','x-upsert':'false'},body:small});body.thumbnail_key=thumb;}catch{thumb='';body.thumbnail_key=null;}
    }
    data=await rpc('actions.save',{...body,image_key:uploaded||undefined});
    // A lost response may follow a successful save; never delete its image on a network error.

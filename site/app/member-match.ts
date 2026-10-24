@@ -26,3 +26,19 @@ export function matchMembers(candidates:string[],members:Member[]){
  const match=top&&(top.score===1||(top.score>=.80&&inputs.some(c=>c.length>=5)))&&(!second||top.score-second.score>=.08)?top.member:undefined;
  return {match,suggestions,ambiguous:!match&&ranked.length>1};
 }
+// Fuzzy matches are suggestions only. Auto-fill requires the same exact registered
+// name in two distinct image treatments, with no competing registered identity.
+export function confirmMember(readings:{name:string;confidence:number;source:string}[],members:Member[]){
+ const roster=members.filter(m=>!m.archived);
+ const evidence=new Map<string,{member:Member;sources:Set<string>}>();
+ for(const reading of readings){
+  if(reading.confidence<85||!Number.isFinite(reading.confidence))continue;
+  const key=nameKey(reading.name);if(key.length<5)continue;
+  const matches=roster.filter(m=>[m.name,...m.aliases].some(n=>nameKey(n)===key));
+  if(matches.length>1)return undefined;
+  if(matches.length===1){const member=matches[0],item=evidence.get(member.id)||{member,sources:new Set<string>()};item.sources.add(reading.source);evidence.set(member.id,item);}
+ }
+ if(evidence.size!==1)return undefined;
+ const candidate=[...evidence.values()][0];
+ return candidate.sources.size>=2?candidate.member:undefined;
+}

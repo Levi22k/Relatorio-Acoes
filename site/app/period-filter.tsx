@@ -1,0 +1,4 @@
+import type {Scope} from './quality';
+export default function PeriodFilter({value,onChange,places}:{value:Scope;onChange:(s:Scope)=>void;places:string[]}){
+ return <div className="filters period-filter"><label>De<input aria-label="Data inicial" type="date" value={value.from} onChange={e=>onChange({...value,from:e.target.value})}/></label><label>Até<input aria-label="Data final" type="date" min={value.from} value={value.to} onChange={e=>onChange({...value,to:e.target.value})}/></label><label>Local<select aria-label="Filtrar local" value={value.place} onChange={e=>onChange({...value,place:e.target.value})}><option value="">Todos os locais</option>{places.map(p=><option key={p}>{p}</option>)}</select></label><button className="text-button" onClick={()=>onChange({from:'',to:'',place:''})}>Limpar filtros</button></div>
+}

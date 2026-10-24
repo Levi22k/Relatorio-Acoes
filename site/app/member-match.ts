@@ -1,5 +1,5 @@
 import {distance} from './ocr-image';
-export type Member={id:string;name:string;aliases:string[]};
+export type Member={id:string;name:string;aliases:string[];archived?:boolean};
 export const nameKey=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
 // Account for glyphs that OCR often joins or splits, without treating every
 // spelling difference as equivalent or guessing from a shared surname alone.

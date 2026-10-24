@@ -1,4 +1,5 @@
 import {matchMembers,type Member} from './member-match';
+import {readTeamTotal} from './quality';
 import {strikeRows,prepareName,matchKnownName,locateReport,locateWinnerStamp,locatedRows,countTallies,type OcrWord} from './ocr-image';
 export type Player={name:string;kills:number;dead?:boolean|null;killsUncertain?:boolean;nameConfidence?:number;nameAlternatives?:string[];matchedName?:boolean};
 export function parseRows(text:string):Player[]{
@@ -42,6 +43,8 @@ export async function readPrint(file:File,onProgress:(s:string)=>void,signal?:Ab
   }
   if(!layout)throw new Error('Não foi possível localizar a tabela de assaltantes. Use a print completa do relatório, sem cortar os títulos, ou preencha manualmente.');
   const bands=locatedRows(source,layout);
+  const totalText=documentWords.filter(w=>w.bbox.x0>=layout!.left&&w.bbox.x1<layout!.left+layout!.span&&w.bbox.y0>=layout!.top-layout!.fontHeight*3&&w.bbox.y1<=layout!.top).sort((a,b)=>a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ');
+  const expectedTotal=readTeamTotal(totalText);
   if(!bands.length)throw new Error('A tabela foi localizada, mas as linhas estão pouco legíveis. Tente a print original ou preencha manualmente.');
   // Read only the area ABOVE the table: its headings contain both team names.
   const header=document.createElement('canvas');header.width=canvas.width;header.height=Math.max(1,Math.floor(layout.top-layout.fontHeight*1.5));
@@ -112,7 +115,7 @@ export async function readPrint(file:File,onProgress:(s:string)=>void,signal?:Ab
    players.push({name,kills:/^\d{1,3}$/.test(digits)?Number(digits):0,killsUncertain:uncertain,dead,nameConfidence,nameAlternatives:[...new Set([...membership.suggestions,...alternatives])].filter(n=>n!==name),matchedName:!!known});
   }
   image.close();
-  return {result,players:players.map(p=>({...p,dead:result==='defeat'?true:p.dead})),text:full.data.text+'\n'+documentText};
+  return {result,expectedTotal,players:players.map(p=>({...p,dead:result==='defeat'?true:p.dead})),text:full.data.text+'\n'+documentText};
  }finally{signal?.removeEventListener('abort',abort);await worker.terminate();}
 }
 

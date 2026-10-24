@@ -85,4 +85,4 @@ footer{border-color:#37302a;color:#9d7659;font-size:8px;padding-top:23px}footer 
 
 .action-stats{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:700px){.action-stats{grid-template-columns:1fr}}
 
-.period-filter{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:18px 0}.period-filter label{display:grid;gap:6px;color:#b9afa4;font-size:13px}.period-filter input,.period-filter select{padding:10px;border:1px solid #51473e;background:#131313;color:#eee;border-radius:7px;min-height:42px}.backup-panel{margin-top:24px}.backup-panel p{margin:14px 0;line-height:1.7}.adjustment-history pre{max-width:460px;max-height:280px;overflow:auto;white-space:pre-wrap;font-size:12px}.participant-entry:has(.uncertain){border-left:3px solid #dca36e;padding-left:8px}
+.backup-panel{margin-top:24px}.backup-panel p{margin:14px 0;line-height:1.7}.participant-row input.unidentified-name{border:2px solid #f07878;background:#2b1818}.name-error{display:block;color:#ff9797;margin:8px 0 12px 34px;font-size:12px}

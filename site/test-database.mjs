@@ -101,4 +101,13 @@ await assert.rejects(db.exec('delete from caderno.events'));
 await assert.rejects(db.query('select caderno.base_api($1,$2)', ['members.list','{}']));
 await db.exec('reset role');
 console.log('PASS: migração repetível, dados preservados, arquivo sem perda de saldo, prints duplicadas, auditoria, restauração idempotente e estornos preservados.');
+const recoverySql=await fs.readFile(new URL('./supabase/restaurar-comportamento.sql',import.meta.url),'utf8');
+// Exercise both the deployed wrapper and an already-updated installation.
+const functionDef=(await db.query("select pg_get_functiondef('public.caderno_api(text,jsonb)'::regprocedure) definition")).rows[0].definition;
+await db.exec(functionDef.replace("elsif op='members.archive' then","elsif op='members.archive' or op='members.delete' then"));
+await db.exec(recoverySql);await db.exec(recoverySql);
+const deletionTest=await rpc('members.save',{name:'Temporary Member',aliases:[]});
+await rpc('members.delete',{id:deletionTest.id});
+assert.equal((await rpc('members.list')).some(m=>m.id===deletionTest.id),false);
+console.log('PASS: rollback do comportamento de membros repetível, sem alterar registros existentes.');
 await db.close();

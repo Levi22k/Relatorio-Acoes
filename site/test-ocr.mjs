@@ -27,3 +27,16 @@ assert.equal(matchMembers(['John Srnit'],members).match,undefined,'similar compe
 const px=prepareName({width:5,height:1,data:new Uint8ClampedArray([0,80,0,255,0,80,0,255,0,100,0,255,0,170,0,255,0,220,0,255])},'contrast');assert.ok(px.data[12]>0&&px.data[12]<255,'preserves intermediate antialiasing');
 console.log('PASS: dynamic headings, 1/6/8/16 rows at different positions, unrelated headings, registered aliases, uncertain/shared names, grayscale detail.');
 
+
+const {readTeamTotal,reviewSummary,inScope,imageHash}=await import(url(await fs.readFile(new URL('./app/quality.ts',import.meta.url),'utf8')));
+assert.equal(readTeamTotal('Assaltantes 7 abates'),7);
+assert.equal(readTeamTotal('7 abates 3 abates'),undefined);
+assert.equal(readTeamTotal('abates'),undefined);
+assert.equal(readTeamTotal('0 abates'),0);
+assert.equal(reviewSummary([{name:'A',kills:3},{name:'B',kills:NaN,killsUncertain:true}],7).mismatch,true);
+assert.equal(reviewSummary([{name:'A',kills:0}],0).mismatch,false);
+assert.equal(inScope({date:'2026-10-23',title:'Banco'},{from:'2026-10-23',to:'2026-10-23',place:'Banco'}),true);
+assert.equal(inScope({date:'2026-10-22',title:'Banco'},{from:'2026-10-23',to:'',place:''}),false);
+assert.equal(await imageHash(new Blob(['abc'])),await imageHash(new Blob(['abc'])));
+assert.notEqual(await imageHash(new Blob(['abc'])),await imageHash(new Blob(['def'])));
+console.log('PASS: soma dos abates, zeros confirmados, números incertos, datas inclusivas e identificação de prints.');

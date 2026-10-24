@@ -39,7 +39,7 @@ begin
  if op not like '%.list' then perform pg_advisory_xact_lock(73921381); end if;
  if op='events.list' then
  return (select coalesce(jsonb_agg(to_jsonb(e) order by e.created desc,e.id desc),'[]') from (select * from caderno.events order by created desc,id desc limit 100 offset greatest(0,least(coalesce((payload->>'offset')::int,0),1000000))) e);
- elsif op='members.archive' or op='members.delete' then
+ elsif op='members.archive' then
  update caderno.members set archived=case when op='members.delete' then true else coalesce((payload->>'archived')::boolean,true) end where id=payload->>'id';
  if not found then raise exception 'Membro não encontrado.'; end if;
  return '{"ok":true}';

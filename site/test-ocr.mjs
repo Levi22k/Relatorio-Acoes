@@ -44,14 +44,21 @@ console.log('PASS: soma dos abates, zeros confirmados, números incertos, datas 
 const {confirmMember}=await import(url(memberSource));
 const readings=(name,confidence=95)=>['contrast','green'].map(source=>({name,confidence,source}));
 assert.equal(confirmMember(readings('Levi Modric'),members)?.name,'Levi Modric');
-assert.equal(confirmMember(readings('Levi Modnc'),members),undefined);
+assert.equal(confirmMember(readings('Levi Modrlc'),members)?.name,'Levi Modric');
 assert.equal(confirmMember(readings('fepeeni',100),members),undefined);
-assert.equal(confirmMember(readings('Levi Modric',50),members),undefined);
+assert.equal(confirmMember(readings('Levi Modric',50),members)?.name,'Levi Modric');
+assert.equal(confirmMember(readings('Levi Modric',10),members),undefined);
+assert.equal(confirmMember(readings('John Smit'),members),undefined);
+assert.equal(confirmMember(readings('Modric'),members),undefined);
+assert.equal(confirmMember(readings('Unregistered Person'),members),undefined);
+assert.equal(confirmMember(readings('Rondito Feamok'),[{id:'r',name:'Rondito Fearnok',aliases:[]}])?.name,'Rondito Fearnok');
 assert.equal(confirmMember(readings('Levi Modric').slice(0,1),members),undefined);
 assert.equal(confirmMember(readings('Levi Modric').map(r=>({...r,source:'contrast'})),members),undefined);
 assert.equal(confirmMember([...readings('Levi Modric'),...readings('Dime Modric')],members),undefined);
 assert.equal(confirmMember(readings('Levi Modric'),[...members,{id:'other',name:'Outro Nome',aliases:['Levi Modric']}]),undefined);
 assert.equal(confirmMember(readings('Levi Modric'),members.map(m=>({...m,archived:true}))),undefined);
+assert.equal(confirmMember([{name:'Lrma Kross',confidence:86,source:'adaptive'},{name:'ima Kross',confidence:69,source:'contrast'},{name:'Erma Kross',confidence:81,source:'original'}],[{id:'lima',name:'Lima Kross',aliases:[]}])?.name,'Lima Kross');
+assert.equal(confirmMember([{name:'Zayniross',confidence:78,source:'contrast'},{name:'Zaynieross',confidence:55,source:'contrast'},{name:'FAT Kross',confidence:39,source:'adaptive'}],[{id:'zayn',name:'Zayn Kross',aliases:[]}]),undefined);
 const policySource=(await fs.readFile(new URL('./app/ocr-policy.ts',import.meta.url),'utf8')).replace("'./member-match'",JSON.stringify(url(memberSource)));
 const {detectResult,uniquePlayers}=await import(url(policySource));
 assert.equal(detectResult(['Os assaltantes venceram']),'victory');
@@ -67,5 +74,6 @@ await assert.rejects(()=>verifyBackup({...backup,exportedAt:'2020-01-01'}),/alte
 await assert.rejects(()=>verifyBackup({...backup,members:[null]}),/completo/);
 await assert.rejects(()=>verifyBackup({...backup,images:{'../unsafe.png':'data:image/png;base64,AAAA'}}),/inválida/);
 assert.equal((await verifyBackup({...backup,version:1,integrity:undefined})).version,1);
-console.log('PASS: exact registered consensus, uncertain/unknown names abstain, duplicate rows, winner phrases, backup integrity and legacy compatibility.');
+console.log('PASS: registered consensus with OCR differences, uncertain/unknown names abstain, duplicate rows, winner phrases, backup integrity and legacy compatibility.');
 assert.equal(detectResult(['Relatório da ação da lei venceram Os oficiais O último do outro lado caiu']),'defeat');
+

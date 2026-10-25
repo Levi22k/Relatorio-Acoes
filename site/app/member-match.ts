@@ -26,19 +26,34 @@ export function matchMembers(candidates:string[],members:Member[]){
  const match=top&&(top.score===1||(top.score>=.80&&inputs.some(c=>c.length>=5)))&&(!second||top.score-second.score>=.08)?top.member:undefined;
  return {match,suggestions,ambiguous:!match&&ranked.length>1};
 }
-// Fuzzy matches are suggestions only. Auto-fill requires the same exact registered
-// name in two distinct image treatments, with no competing registered identity.
+// Compare independent image treatments with the registry. OCR confidence is not
+// name correctness: crossed-out letters can receive low confidence even when the
+// full name strongly matches. Repeated treatments cannot multiply the evidence.
 export function confirmMember(readings:{name:string;confidence:number;source:string}[],members:Member[]){
  const roster=members.filter(m=>!m.archived);
- const evidence=new Map<string,{member:Member;sources:Set<string>}>();
- for(const reading of readings){
-  if(reading.confidence<85||!Number.isFinite(reading.confidence))continue;
-  const key=nameKey(reading.name);if(key.length<5)continue;
-  const matches=roster.filter(m=>[m.name,...m.aliases].some(n=>nameKey(n)===key));
-  if(matches.length>1)return undefined;
-  if(matches.length===1){const member=matches[0],item=evidence.get(member.id)||{member,sources:new Set<string>()};item.sources.add(reading.source);evidence.set(member.id,item);}
+ const usable=readings.filter(r=>Number.isFinite(r.confidence)&&r.confidence>=30&&nameKey(r.name).length>=5);
+ const exactIdentities=new Set<string>();
+ for(const r of usable.filter(r=>r.confidence>=60)){
+  const exact=roster.filter(m=>[m.name,...m.aliases].some(n=>nameKey(n)===nameKey(r.name)));
+  if(exact.length>1)return undefined;
+  if(exact.length)exactIdentities.add(exact[0].id);
  }
- if(evidence.size!==1)return undefined;
- const candidate=[...evidence.values()][0];
- return candidate.sources.size>=2?candidate.member:undefined;
+ if(exactIdentities.size>1)return undefined;
+ const ranked=roster.map(member=>{
+  const sources=new Map<string,number>();
+  for(const r of usable){
+   const key=nameKey(r.name),full=nameKey(member.name);
+   // Short aliases are accepted exactly; fuzzy surname-only matches are not.
+   let score=key.length>=8?ocrNameScore(key,full):key===full?1:0;
+   if(member.aliases.some(a=>nameKey(a)===key))score=1;
+   sources.set(r.source,Math.max(sources.get(r.source)||0,score));
+  }
+  const scores=[...sources.values()].sort((a,b)=>b-a);
+  return {member,scores,score:((scores[0]||0)+(scores[1]||0))/2};
+ }).sort((a,b)=>b.score-a.score);
+ const top=ranked[0],second=ranked[1];if(!top)return undefined;
+ if(exactIdentities.size&&!exactIdentities.has(top.member.id))return undefined;
+ if(second&&top.score-second.score<.09)return undefined;
+ return top.scores.length>=2&&top.scores[1]>=.84&&top.score>=.88?top.member:undefined;
 }
+

@@ -3,7 +3,7 @@ import {nameKey,type Member} from './member-match';
 export const prizeRules=[
  {label:'Banco normal',amount:1125000}, {label:'Banco de Armadillo',amount:1350000},
  {label:'Petrolífera',amount:1350000}, {label:'Estação normal',amount:750000},
- {label:'Estação de Armadillo',amount:900000}, {label:'Lojinha · inclui Cidade Queimada',amount:425000},
+ {label:'Estação de Armadillo',amount:900000}, {label:'Cidade Queimada',amount:750000}, {label:'Lojinha',amount:425000},
 ];
 export const money=(cents:number)=>'$ '+(cents/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 export const reservePercent=15;
@@ -20,7 +20,7 @@ export type TreasuryData={accounts:Account[];unpriced:{id:string;title:string}[]
 export function actionPrize(category:string,title:string):number|null {
  const t=title.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const armadillo=/\barmadillo\b|\bam\b/.test(t);
- if(/cidade queimada/.test(t))return 425000;
+ if(category==='burned_city'||/cidade\s*queimada/.test(t))return 750000;
  if(category==='banks')return armadillo?1350000:1125000;
  if(category==='stations')return armadillo?900000:750000;
  if(category==='oil')return 1350000;

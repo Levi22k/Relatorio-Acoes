@@ -31,10 +31,10 @@ assert.equal(await balance('levimodric'),478125);
 await rpc('actions.delete',{id:win.id});assert.equal(await balance('levimodric'),0);
 const third=await rpc('members.save',{name:'Bandana',aliases:[]});
 const city=await rpc('actions.save',{title:'Cidade Queimada',date:'2026-10-14',category:'other',result:'victory',participants:[{name:a.name,kills:0},{name:b.name,kills:0},{name:third.name,kills:0}],image_key:'33333333-3333-3333-3333-333333333333.png'});
-assert.equal(await balance('bandana'),120417);assert.equal(await balance('levimodric'),120417);assert.equal(await balance('rafislazuli'),120416);
+assert.equal(await balance('bandana'),212500);assert.equal(await balance('levimodric'),212500);assert.equal(await balance('rafislazuli'),212500);
 const negative={id:crypto.randomUUID(),kind:'adjustment',key:'bandana',amount:-500000,reason:'Desconto individual'};
-await rpc('treasury.save',negative);assert.equal(await balance('bandana'),-379583);
-assert.equal(await balance('levimodric'),120417);
+await rpc('treasury.save',negative);assert.equal(await balance('bandana'),-287500);
+assert.equal(await balance('levimodric'),212500);
 await rpc('members.delete',{id:third.id});assert.equal((await rpc('treasury.list')).history.length,3);
 for(const [category,title,expected] of [['banks','Banco de Armadillo',1350000],['stations','Estação de Armadillo',900000],['stations','Estação de Rhodes',750000],['oil','Petrolífera',1350000],['stores','Lojinha',425000]]){
  assert.equal(Number((await db.query('select caderno.prize($1,$2) p',[category,title])).rows[0].p),expected);
@@ -110,4 +110,17 @@ const deletionTest=await rpc('members.save',{name:'Temporary Member',aliases:[]}
 await rpc('members.delete',{id:deletionTest.id});
 assert.equal((await rpc('members.list')).some(m=>m.id===deletionTest.id),false);
 console.log('PASS: rollback do comportamento de membros repetível, sem alterar registros existentes.');
+const citySql=await fs.readFile(new URL('./supabase/atualizar-cidade-queimada.sql',import.meta.url),'utf8');
+// Simulate the previously deployed schema and prize, then apply twice.
+await db.exec("alter table caderno.actions drop constraint actions_category_check; alter table caderno.actions add constraint actions_category_check check(category in ('banks','stations','oil','stores','other'));");
+const oldPrize=(await db.query("select pg_get_functiondef('caderno.prize(text,text)'::regprocedure) definition")).rows[0].definition;
+await db.exec(oldPrize.replace("category='burned_city' or caderno.name_key(title) like '%cidadequeimada%' then 750000","caderno.name_key(title) like '%cidadequeimada%' then 425000"));
+assert.equal(Number((await db.query("select caderno.prize('stores','Lojinha da Cidade Queimada') p")).rows[0].p),425000);
+const stateBeforeCity=await rpc('backup.list');
+await db.exec(citySql);await db.exec(citySql);
+const stateAfterCity=await rpc('backup.list'); delete stateBeforeCity.exportedAt; delete stateAfterCity.exportedAt; assert.deepEqual(stateAfterCity,stateBeforeCity);
+for(const category of ['stores','other','burned_city'])assert.equal(Number((await db.query('select caderno.prize($1,$2) p',[category,'Cidade Queimada'])).rows[0].p),750000);
+const newCity=await rpc('actions.save',{title:'Cidade Queimada',category:'burned_city',date:'2026-10-25',result:'victory',participants:[{name:'Levi Modric Novo',kills:0}],image_key:'77777777-7777-7777-7777-777777777777.png'});
+assert.equal((await rpc('actions.list')).find(a=>a.id===newCity.id)?.category,'burned_city');
+console.log('PASS: Cidade Queimada 7.500, categoria direta, migração repetível e preservação exata de todos os registros.');
 await db.close();

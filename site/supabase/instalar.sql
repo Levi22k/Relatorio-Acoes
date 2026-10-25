@@ -9,7 +9,7 @@ create function caderno.name_key(s text) returns text language sql immutable set
 $$;
 create table caderno.members(id text primary key, name text not null check(length(name) between 1 and 80), aliases jsonb not null default '[]', created timestamptz not null default now());
 create unique index member_name_unique on caderno.members(caderno.name_key(name));
-create table caderno.actions(id text primary key,title text not null check(length(title) between 1 and 100), date date not null, category text not null check(category in ('banks','stations','oil','stores','other')),result text not null check(result in ('victory','defeat','cancelled')),participants jsonb not null,image_key text not null,created timestamptz not null default now());
+create table caderno.actions(id text primary key,title text not null check(length(title) between 1 and 100), date date not null, category text not null check(category in ('banks','stations','oil','stores','other','burned_city')),result text not null check(result in ('victory','defeat','cancelled')),participants jsonb not null,image_key text not null,created timestamptz not null default now());
 create table caderno.payments(id text primary key,name text not null,amount bigint not null check(amount>0),created timestamptz not null default now());
 create table caderno.adjustments(id text primary key,name text not null,amount bigint not null check(amount<>0),reason text not null,created timestamptz not null default now());
 create table caderno.adjustment_events(id text primary key,"adjustmentId" text not null,name text not null,amount bigint not null,reason text not null,event text not null check(event in ('created','reversed')),created timestamptz not null default now());
@@ -29,7 +29,7 @@ begin
  return case when matches=1 then matched else trim(n) end;
 end;$$;
 create function caderno.prize(category text,title text) returns bigint language sql immutable set search_path='' as $$
- select case when caderno.name_key(title) like '%cidadequeimada%' then 425000
+ select case when category='burned_city' or caderno.name_key(title) like '%cidadequeimada%' then 750000
  when category='banks' then case when lower(title) ~ '\m(armadillo|am)\M' then 1350000 else 1125000 end
  when category='stations' then case when lower(title) ~ '\m(armadillo|am)\M' then 900000 else 750000 end
  when category='oil' then 1350000 when category='stores' then 425000 else null end;

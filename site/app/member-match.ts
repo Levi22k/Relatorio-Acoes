@@ -57,3 +57,10 @@ export function confirmMember(readings:{name:string;confidence:number;source:str
  return top.scores.length>=2&&top.scores[1]>=.84&&top.score>=.88?top.member:undefined;
 }
 
+// Registration checks never use approximate OCR matches.
+export function isRegistered(name:string,members:Member[]){
+ const key=nameKey(name),active=members.filter(m=>!m.archived);
+ if(!key)return false;
+ const full=active.filter(m=>nameKey(m.name)===key);
+ return full.length===1||(!full.length&&active.filter(m=>m.aliases.some(a=>nameKey(a)===key)).length===1);
+}

@@ -58,3 +58,11 @@ export function calculateTreasury(actions:TreasuryAction[],payments:Payment[],me
  const list=[...accounts.values()].map(a=>({...a,balance:a.earned+a.adjusted-a.paid,adjustments:a.adjustments.sort((a,b)=>b.created.localeCompare(a.created)),credits:a.credits.sort((a,b)=>b.date.localeCompare(a.date)),payments:a.payments.sort((a,b)=>b.created.localeCompare(a.created))})).sort((a,b)=>b.balance-a.balance||a.name.localeCompare(b.name,'pt-BR'));
  return {accounts:list,unpriced,victories,earned:list.reduce((s,a)=>s+a.earned,0),grossEarned:list.reduce((s,a)=>s+a.grossEarned,0),bandReserve:list.reduce((s,a)=>s+a.withheld,0),paid:list.reduce((s,a)=>s+a.paid,0),balance:list.reduce((s,a)=>s+Math.max(0,a.balance),0),overpaid:list.reduce((s,a)=>s+Math.max(0,-a.balance),0)};
 }
+// Payments are not linked to actions in storage. Display a deterministic FIFO
+// allocation, keeping the original credits and payment history untouched.
+export function pendingCredits(account:Account){
+ if(account.balance<=0)return [];
+ let covered=Math.max(0,account.paid)+Math.max(0,-account.adjusted);
+ const credits=[...account.credits].sort((a,b)=>a.date.localeCompare(b.date)||a.actionId.localeCompare(b.actionId));
+ return credits.map(c=>{const applied=Math.min(c.amount,covered);covered-=applied;return {...c,remaining:c.amount-applied};}).filter(c=>c.remaining>0).reverse();
+}

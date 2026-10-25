@@ -77,3 +77,24 @@ assert.equal((await verifyBackup({...backup,version:1,integrity:undefined})).ver
 console.log('PASS: registered consensus with OCR differences, uncertain/unknown names abstain, duplicate rows, winner phrases, backup integrity and legacy compatibility.');
 assert.equal(detectResult(['Relatório da ação da lei venceram Os oficiais O último do outro lado caiu']),'defeat');
 
+const {isRegistered}=await import(url(memberSource));
+assert.equal(isRegistered('Lévi',members),true);
+assert.equal(isRegistered('Levi Modnc',members),false);
+assert.equal(isRegistered('Levi',members.map(m=>({...m,archived:true}))),false);
+assert.equal(isRegistered('Levi',[...members,{id:'dup',name:'Outro',aliases:['Levi']}]),false);
+const treasurySource=(await fs.readFile(new URL('./app/treasury-calculation.ts',import.meta.url),'utf8')).replace("'./member-match'",JSON.stringify(url(memberSource)));
+const {calculateTreasury,pendingCredits}=await import(url(treasurySource));
+const sampleActions=[1,2,3,4,5].map(i=>({id:String(i),title:'Banco de Rhodes',category:'banks',date:`2026-10-${14+i}`,result:'victory',participants:[{name:'Levi Modric'}]}));
+const accountFor=(paid=0,adjusted=0)=>calculateTreasury(sampleActions,paid?[{id:'p',name:'Levi Modric',amount:paid,created:'2026-10-25'}]:[],[members[0]],adjusted?[{id:'a',name:'Levi Modric',amount:adjusted,reason:'Ajuste',created:'2026-10-25'}]:[]).accounts[0];
+const originalAccount=accountFor(),originalSnapshot=JSON.stringify(originalAccount);
+const perAction=956250;
+assert.equal(pendingCredits(originalAccount).length,5);
+assert.equal(JSON.stringify(originalAccount),originalSnapshot);
+assert.deepEqual(pendingCredits(accountFor(perAction*5)),[]);
+assert.deepEqual(pendingCredits(accountFor(perAction*2+100)).map(c=>[c.actionId,c.remaining]),[['5',perAction],['4',perAction],['3',perAction-100]]);
+assert.equal(pendingCredits(accountFor()).length,5); // Reversing a payment restores the list.
+assert.deepEqual(pendingCredits(accountFor(perAction*5+500000,500000)),[]);
+assert.deepEqual(pendingCredits(accountFor(perAction*5-500000,-500000)),[]);
+assert.equal(pendingCredits(accountFor(0,-500000)).reduce((s,c)=>s+c.remaining,0),perAction*5-500000);
+assert.deepEqual(pendingCredits(accountFor(perAction*5+100)),[]);
+console.log('PASS: registro exato/apelidos/ambiguidades; cinco ações, quitação, pagamento parcial FIFO, estorno e ajustes sem mudar saldos.');

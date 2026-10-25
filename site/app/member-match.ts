@@ -54,5 +54,6 @@ export function confirmMember(readings:{name:string;confidence:number;source:str
  const top=ranked[0],second=ranked[1];if(!top)return undefined;
  if(exactIdentities.size&&!exactIdentities.has(top.member.id))return undefined;
  if(second&&top.score-second.score<.09)return undefined;
- return top.scores.length>=2&&top.scores[1]>=.84&&top.score>=.89?top.member:undefined;
+ return top.scores.length>=2&&top.scores[1]>=.84&&top.score>=.88?top.member:undefined;
 }
+

@@ -123,4 +123,5 @@ for(const category of ['stores','other','burned_city'])assert.equal(Number((awai
 const newCity=await rpc('actions.save',{title:'Cidade Queimada',category:'burned_city',date:'2026-10-25',result:'victory',participants:[{name:'Levi Modric Novo',kills:0}],image_key:'77777777-7777-7777-7777-777777777777.png'});
 assert.equal((await rpc('actions.list')).find(a=>a.id===newCity.id)?.category,'burned_city');
 console.log('PASS: Cidade Queimada 7.500, categoria direta, migração repetível e preservação exata de todos os registros.');
+const {testAccess}=await import('./test-access.mjs');await testAccess(db,rpc,assert,fs);
 await db.close();

@@ -1,3 +1,4 @@
+import {accessToken} from './auth-client';
 import {calculateTreasury} from './treasury-calculation';
 import {imageHash,thumbnail} from './quality';
 const url=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'');
@@ -8,7 +9,8 @@ const headers:Record<string,string>={apikey:key};
 if(key.startsWith('eyJ'))headers.Authorization='Bearer '+key;
 async function remote(path:string,options:RequestInit={}){
  if(!configured)throw new Error('Configure o Supabase antes de usar o caderno.');
- const r=await globalThis.fetch(url+path,{...options,headers:{...headers,...options.headers}});
+ const token=await accessToken();
+ const r=await globalThis.fetch(url+path,{...options,headers:{...headers,...options.headers,...(token?{Authorization:'Bearer '+token}:{})}});
  const text=await r.text();let body:any;try{body=text?JSON.parse(text):{};}catch{throw new Error('O servidor retornou uma resposta inválida. Confira a conexão e tente novamente.');}if(!r.ok)throw new Error(body.message||body.error_description||body.error||'Não foi possível acessar o banco.');return body;
 }
 export async function rpc(op:string,payload:unknown={}){return remote('/rest/v1/rpc/caderno_api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op,payload})});}

@@ -1,0 +1,2 @@
+import {getLocale,setLanguage,useLanguage,type Language} from './i18n';
+export default function LanguageSelector(){useLanguage();return <label className="language-selector"><span aria-hidden="true">🌐</span><select aria-label="Idioma / Language" value={getLocale()} onChange={e=>setLanguage(e.target.value as Language)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option></select></label>}

@@ -51,3 +51,5 @@ export async function apiFetch(input:string,options:RequestInit={}):Promise<Resp
   return Response.json(data);
  }catch(e:any){return Response.json({error:e.message||'Falha de conexão.'},{status:400});}
 }
+
+export async function createLogin(payload:unknown){return remote('/functions/v1/create-manager',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}

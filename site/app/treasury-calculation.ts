@@ -1,3 +1,4 @@
+import {getLocale} from './i18n';
 import {nameKey,type Member} from './member-match';
 
 export const prizeRules=[
@@ -5,7 +6,7 @@ export const prizeRules=[
  {label:'Petrolífera',amount:1350000}, {label:'Estação normal',amount:750000},
  {label:'Estação de Armadillo',amount:900000}, {label:'Cidade Queimada',amount:750000}, {label:'Lojinha',amount:425000},
 ];
-export const money=(cents:number)=>'$ '+(cents/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+export const money=(cents:number)=>'$ '+(cents/100).toLocaleString(getLocale(),{minimumFractionDigits:2,maximumFractionDigits:2});
 export const reservePercent=15;
 export const bandReserve=(prize:number)=>Math.round(prize*reservePercent/100);
 export const memberPrize=(prize:number)=>prize-bandReserve(prize);

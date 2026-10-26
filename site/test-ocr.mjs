@@ -59,7 +59,7 @@ assert.equal(confirmMember(readings('Levi Modric'),[...members,{id:'other',name:
 assert.equal(confirmMember(readings('Levi Modric'),members.map(m=>({...m,archived:true}))),undefined);
 assert.equal(confirmMember([{name:'Lrma Kross',confidence:86,source:'adaptive'},{name:'ima Kross',confidence:69,source:'contrast'},{name:'Erma Kross',confidence:81,source:'original'}],[{id:'lima',name:'Lima Kross',aliases:[]}])?.name,'Lima Kross');
 assert.equal(confirmMember([{name:'Zayniross',confidence:78,source:'contrast'},{name:'Zaynieross',confidence:55,source:'contrast'},{name:'FAT Kross',confidence:39,source:'adaptive'}],[{id:'zayn',name:'Zayn Kross',aliases:[]}]),undefined);
-const policySource=(await fs.readFile(new URL('./app/ocr-policy.ts',import.meta.url),'utf8')).replace("'./member-match'",JSON.stringify(url(memberSource)));
+const policySource=(await fs.readFile(new URL('./app/ocr-policy.ts',import.meta.url),'utf8')).replace("'./member-match'",JSON.stringify(url(memberSource))).replace("import {getLocale} from './i18n';","const getLocale=()=> 'pt-BR';");
 const {detectResult,uniquePlayers}=await import(url(policySource));
 assert.equal(detectResult(['Os assaltantes venceram']),'victory');
 assert.equal(detectResult(['Os oficiais da lei venceram']),'defeat');
@@ -82,7 +82,7 @@ assert.equal(isRegistered('Lévi',members),true);
 assert.equal(isRegistered('Levi Modnc',members),false);
 assert.equal(isRegistered('Levi',members.map(m=>({...m,archived:true}))),false);
 assert.equal(isRegistered('Levi',[...members,{id:'dup',name:'Outro',aliases:['Levi']}]),false);
-const treasurySource=(await fs.readFile(new URL('./app/treasury-calculation.ts',import.meta.url),'utf8')).replace("'./member-match'",JSON.stringify(url(memberSource)));
+const treasurySource=(await fs.readFile(new URL('./app/treasury-calculation.ts',import.meta.url),'utf8')).replace("'./member-match'",JSON.stringify(url(memberSource))).replace("import {getLocale} from './i18n';","const getLocale=()=> 'pt-BR';");
 const {calculateTreasury,pendingCredits}=await import(url(treasurySource));
 const sampleActions=[1,2,3,4,5].map(i=>({id:String(i),title:'Banco de Rhodes',category:'banks',date:`2026-10-${14+i}`,result:'victory',participants:[{name:'Levi Modric'}]}));
 const accountFor=(paid=0,adjusted=0)=>calculateTreasury(sampleActions,paid?[{id:'p',name:'Levi Modric',amount:paid,created:'2026-10-25'}]:[],[members[0]],adjusted?[{id:'a',name:'Levi Modric',amount:adjusted,reason:'Ajuste',created:'2026-10-25'}]:[]).accounts[0];

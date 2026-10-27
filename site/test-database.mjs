@@ -125,4 +125,5 @@ assert.equal((await rpc('actions.list')).find(a=>a.id===newCity.id)?.category,'b
 console.log('PASS: Cidade Queimada 7.500, categoria direta, migração repetível e preservação exata de todos os registros.');
 const {testAccess}=await import('./test-access.mjs');await testAccess(db,rpc,assert,fs);
 const {testManagers}=await import('./test-managers.mjs');await testManagers(db,rpc,assert,fs);
+const {testPrivateAccounts}=await import('./test-private-accounts.mjs');await testPrivateAccounts(db,rpc,assert,fs);
 await db.close();

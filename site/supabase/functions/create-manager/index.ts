@@ -17,7 +17,7 @@ Deno.serve(async(req:Request)=>{
   const raw=await req.text();if(raw.length>4096)return reply(400,{error:'Dados inválidos.'});
   const body=JSON.parse(raw),login=String(body.login||'').trim().toLowerCase(),email=String(body.email||'').trim().toLowerCase(),password=body.password;
   if(!/^[a-z0-9_.-]{3,32}$/.test(login)||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||typeof password!=='string'||password.length<8||password.length>128)return reply(400,{error:'Confira o login, o e-mail e a senha (mínimo de 8 caracteres).'});
-  const {data:existing,error:lookupError}=await caller.rpc('caderno_login_email',{login});
+  const {data:existing,error:lookupError}=await caller.rpc('caderno_login_exists',{login});
   if(lookupError)return reply(503,{error:'Não foi possível conferir o login. Tente novamente.'});
   if(existing)return reply(409,{error:'Este login já existe. Escolha outro.'});
   const {data:created,error:createError}=await admin.auth.admin.createUser({email,password,email_confirm:true});

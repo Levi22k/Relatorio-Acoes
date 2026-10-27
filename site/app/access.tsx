@@ -1,3 +1,4 @@
+import {authenticateAccount} from './account-auth';
 import {t,useLanguage,getLocale} from './i18n';
 import {createContext,useContext,useEffect,useState,type ReactNode} from 'react';
 import type {Session} from '@supabase/supabase-js';
@@ -15,18 +16,14 @@ export default function AccessGate({children}:{children:ReactNode}){useLanguage(
   return()=>{alive=false;data.subscription.unsubscribe()};
  },[]);
  useEffect(()=>{let alive=true;if(session){authClient!.rpc('caderno_is_admin').then(({data,error})=>{if(alive){setAdmin(!error&&data===true);setChecking(false);if(error||data!==true)setError('Esta conta não tem acesso de administrador.')}})}return()=>{alive=false}},[session]);
- async function emailForLogin(){
-  const {data,error}=await authClient!.rpc('caderno_login_email',{login:login.trim()});
-  if(error||!data)throw new Error('Login ou senha inválidos.');return String(data);
- }
  async function enter(e:React.FormEvent){e.preventDefault();setBusy(true);setError('');setMessage('');try{
-  const email=await emailForLogin();rememberAccess(remember);
-  const {error}=await authClient!.auth.signInWithPassword({email,password});
+  rememberAccess(remember);const tokens=await authenticateAccount('login',login.trim(),password);
+  const {error}=await authClient!.auth.setSession(tokens);
   if(error)throw new Error('Login ou senha inválidos.');setPassword('');setGuest(false);
  }catch(e:any){setError(e.message)}finally{setBusy(false)}}
  async function exit(){await authClient!.auth.signOut({scope:'local'});rememberAccess(false);setSession(null);setAdmin(false);setGuest(false);setRecovery(false);setError('');setPassword('');setChecking(false)}
  async function enterGuest(){setBusy(true);try{await exit();setGuest(true)}finally{setBusy(false)}}
- async function reset(){setBusy(true);setError('');setMessage('');try{const email=await emailForLogin();const {error}=await authClient!.auth.resetPasswordForEmail(email,{redirectTo:location.origin+import.meta.env.BASE_URL});if(error)throw error;setMessage('Confira o e-mail de recuperação cadastrado.')}catch{setError('Não foi possível enviar a recuperação. Confira o login e tente novamente.')}finally{setBusy(false)}}
+ async function reset(){setBusy(true);setError('');setMessage('');try{await authenticateAccount('recovery',login.trim());setMessage('Confira o e-mail de recuperação cadastrado.')}catch{setError('Não foi possível enviar a recuperação. Confira o login e tente novamente.')}finally{setBusy(false)}}
  async function changePassword(e:React.FormEvent){e.preventDefault();setBusy(true);setError('');try{const {error}=await authClient!.auth.updateUser({password});if(error)throw error;await exit();setMessage('Senha alterada. Entre novamente.')}catch{setError('Não foi possível alterar a senha. Use pelo menos 8 caracteres e tente novamente.')}finally{setBusy(false)}}
  if(checking)return <main className="login-page"><LoaderCircle className="spin"/><p>{t("Conferindo acesso…")}</p></main>;
  if((admin||guest)&&!recovery)return <Access.Provider value={{admin,exit}}>{t(children)}</Access.Provider>;

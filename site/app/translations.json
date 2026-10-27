@@ -563,5 +563,16 @@
   "Confirmar remoção": "Confirm removal",
   "Somente o administrador supremo pode gerenciar acessos.": "Only the owner can manage access.",
   "Não é possível alterar este acesso.": "This account’s access cannot be changed.",
-  "Não foi possível entrar. Tente novamente.": "Unable to sign in. Please try again."
+  "Não foi possível entrar. Tente novamente.": "Unable to sign in. Please try again.",
+  "Período": "Period",
+  "Período do ranking": "Leaderboard period",
+  "Geral": "All time",
+  "Hoje": "Today",
+  "Últimos 3 dias": "Last 3 days",
+  "Últimos 7 dias": "Last 7 days",
+  "Local no ranking": "Leaderboard location",
+  "Ordenado por abates nos filtros selecionados": "Sorted by kills within the selected filters",
+  "Filtros pela data da ação, no horário de Brasília. Últimos dias incluem hoje. Todas as colunas refletem os filtros selecionados.": "Filters use the action date and Brasília time. Recent days include today. All columns reflect the selected filters.",
+  "Nenhum participante neste filtro.": "No participants match these filters.",
+  "Escolha outro período ou local para consultar o ranking.": "Choose another period or location to view the leaderboard."
 }

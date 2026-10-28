@@ -11,3 +11,8 @@ export function filterRankingActions<T extends {date:string;title:string}>(actio
  const first=start.toISOString().slice(0,10);
  return actions.filter(a=>(!place||locationKey(a.title)===place)&&(period==='all'||(a.date>=first&&a.date<=today)));
 }
+
+export const rankingNameKey=(name:string)=>name.trim().toLocaleLowerCase('pt-BR');
+export function participantActions<T extends {date:string;created:string;participants:{name:string;kills:number}[]}>(actions:T[],name:string){
+ return actions.flatMap(action=>{const participants=action.participants.filter(p=>rankingNameKey(p.name)===rankingNameKey(name));return participants.length?[{action,kills:participants.reduce((sum,p)=>sum+p.kills,0)}]:[];}).sort((a,b)=>b.action.date.localeCompare(a.action.date)||b.action.created.localeCompare(a.action.created));
+}

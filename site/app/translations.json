@@ -574,5 +574,10 @@
   "Ordenado por abates nos filtros selecionados": "Sorted by kills within the selected filters",
   "Filtros pela data da ação, no horário de Brasília. Últimos dias incluem hoje. Todas as colunas refletem os filtros selecionados.": "Filters use the action date and Brasília time. Recent days include today. All columns reflect the selected filters.",
   "Nenhum participante neste filtro.": "No participants match these filters.",
-  "Escolha outro período ou local para consultar o ranking.": "Choose another period or location to view the leaderboard."
+  "Escolha outro período ou local para consultar o ranking.": "Choose another period or location to view the leaderboard.",
+  "RELATÓRIO DE ABATES": "KILL REPORT",
+  "Fechar relatório": "Close report",
+  "Ações do participante nos filtros selecionados. Horários de registro em Brasília.": "Participant actions within the selected filters. Registration times are shown in Brasília time.",
+  "Horário não disponível": "Time unavailable",
+  "Ver ações e abates do participante": "View participant actions and kills"
 }

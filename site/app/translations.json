@@ -579,5 +579,10 @@
   "Fechar relatório": "Close report",
   "Ações do participante nos filtros selecionados. Horários de registro em Brasília.": "Participant actions within the selected filters. Registration times are shown in Brasília time.",
   "Horário não disponível": "Time unavailable",
-  "Ver ações e abates do participante": "View participant actions and kills"
+  "Ver ações e abates do participante": "View participant actions and kills",
+  "Recuperando rascunho…": "Recovering draft…",
+  "Não foi possível guardar o rascunho. Mantenha esta aba aberta.": "Could not save the draft. Keep this tab open.",
+  "Guardando rascunho neste navegador…": "Saving draft in this browser…",
+  "Rascunho recuperado e salvo neste navegador.": "Draft recovered and saved in this browser.",
+  "Rascunho salvo neste navegador.": "Draft saved in this browser."
 }
